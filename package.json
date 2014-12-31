@@ -14,7 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "co": "3.0.4",
-    "kinda-object": "https://github.com/kinda/kinda-object/tarball/master",
+    "kinda-object": "kinda/kinda-object",
     "lodash": "^2.4.1"
   }
 }
