@@ -10,7 +10,7 @@ var KindaWebSQL = KindaObject.extend('KindaWebSQL', function() {
     var shortName = name;
     var version = options.version || '1.0';
     var displayName = options.displayName || name;
-    var maxSize = options.maxSize || (25 * 1024 * 1024); // 25 MB
+    var maxSize = options.maxSize || (500 * 1024 * 1024); // 500 MB
     this.database = openDatabase(shortName, version, displayName, maxSize);
   });
 
