@@ -24,6 +24,8 @@
     "lodash": "^3.9.1"
   },
   "devDependencies": {
-    "babel": "^5.4.7"
+    "babel": "^5.4.7",
+    "eslint": "^1.0.0",
+    "eslint-config-kinda": "^0.2.0"
   }
 }
