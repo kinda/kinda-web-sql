@@ -1,7 +1,7 @@
 'use strict';
 
 let _ = require('lodash');
-let co = require('co');
+let AwaitLock = require('await-lock');
 let KindaObject = require('kinda-object');
 
 let KindaWebSQL = KindaObject.extend('KindaWebSQL', function() {
@@ -12,65 +12,50 @@ let KindaWebSQL = KindaObject.extend('KindaWebSQL', function() {
     let displayName = options.displayName || options.name;
     let maxSize = options.maxSize || (50 * 1024 * 1024); // 50 MB
     this.database = openDatabase(shortName, version, displayName, maxSize);
+    this.awaitLock = new AwaitLock();
   };
 
-  this.query = function(sql, values) {
-    let that = this;
-    values = that.normalizeValues(values);
-    let result;
-    return function(cb) {
-      that.database.transaction(function(tr) {
+  this.lock = async function(fn) {
+    await this.awaitLock.acquireAsync();
+    try {
+      return await fn();
+    } finally {
+      this.awaitLock.release();
+    }
+  };
+
+  this.query = async function(sql, values) {
+    return await this.lock(async function() {
+      return await this._query(sql, values);
+    }.bind(this));
+  };
+
+  this._query = async function(sql, values) {
+    values = this.normalizeValues(values);
+    let result = await this.__query(sql, values);
+    result = this.normalizeResult(result);
+    return result;
+  };
+
+  this.__query = function(sql, values) {
+    return new Promise((resolve, reject) => {
+      let result;
+      this.database.transaction(function(tr) {
         tr.executeSql(sql, values, function(innerTr, res) {
-          result = that.normalizeResult(res);
+          result = res;
         });
       }, function(err) { // transaction error callback
-        cb(err);
+        reject(err);
       }, function() { // transaction success callback
-        cb(null, result);
+        resolve(result);
       });
-    };
+    });
   };
 
-  this.transaction = function(fn) {
-    let that = this;
-    return function(cb) {
-      let lastErr;
-      let transactionAborted;
-      that.database.transaction(function(tr) {
-        co(function *() {
-          try {
-            yield fn({
-              query(sql, values) {
-                values = that.normalizeValues(values);
-                return function(innerCb) {
-                  try {
-                    tr.executeSql(sql, values, function(innerTr, res) {
-                      innerCb(null, that.normalizeResult(res));
-                    }, function(innerTr, err) {
-                      transactionAborted = true;
-                      innerCb(err);
-                      return true;
-                    });
-                  } catch (err) {
-                    cb(err);
-                  }
-                };
-              }
-            });
-          } catch (err) {
-            lastErr = err;
-            if (!transactionAborted) {
-              transactionAborted = true;
-              tr.executeSql('arghhhh'); // force the transaction to fail
-            }
-          }
-        })();
-      }, function(err) { // transaction error callback
-        cb(lastErr || err);
-      }, function() { // transaction success callback
-        cb(null);
-      });
-    };
+  this.transaction = async function(fn) {
+    return await this.lock(async function() {
+      return await fn({ query: this._query.bind(this) });
+    }.bind(this));
   };
 
   this.normalizeValues = function(values) {

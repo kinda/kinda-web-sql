@@ -20,7 +20,7 @@
   "author": "Manuel Vila <mvila@3base.com>",
   "license": "MIT",
   "dependencies": {
-    "co": "3.0.4",
+    "await-lock": "^1.1.1",
     "kinda-object": "^0.3.0",
     "lodash": "^3.9.1"
   },
