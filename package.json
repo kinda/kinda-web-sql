@@ -15,7 +15,7 @@
     "release-minor": "npm run release --release-type=minor",
     "release-major": "npm run release --release-type=major",
     "lint": "eslint .",
-    "test": "echo \"Warning: no test specified\" && exit 0"
+    "test": "electron-mocha --renderer --ui tdd test"
   },
   "author": "Manuel Vila <mvila@3base.com>",
   "license": "MIT",
@@ -27,6 +27,9 @@
   "devDependencies": {
     "babel": "^5.4.7",
     "babel-eslint": "^4.0.5",
+    "chai": "^3.2.0",
+    "electron-mocha": "^0.3.1",
+    "electron-prebuilt": "^0.32.2",
     "eslint": "^1.0.0",
     "eslint-config-kinda": "^0.2.0"
   }
